@@ -12,14 +12,18 @@ const decodeToken = (token) => {
     return null;
   }
 };
-export default async function requireAuth(req, res, next) {
+const requireAuthToken = (tokenType) => (req, res, next) => {
   req.user = {};
   let token;
   let payload;
   if (
     !req.headers.authorization ||
     req.headers.authorization.split(" ")[0] !== "Bearer" ||
-    !(payload = decodeToken((token = req.headers.authorization.split(" ")[1])))
+    !(payload = decodeToken(
+      (token = req.headers.authorization.split(" ")[1])
+    )) ||
+    payload.type != tokenType ||
+    (payload.iss && redisClient.get(`bl_${payload.iss}`).value())
   ) {
     return next(
       new ApiError({
@@ -34,4 +38,6 @@ export default async function requireAuth(req, res, next) {
     token: req.headers.authorization.split(" ")[1],
   };
   next();
-}
+};
+
+export default requireAuthToken;

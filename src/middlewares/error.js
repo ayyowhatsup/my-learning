@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "../utils/api-error";
 import { ERROR_CODES } from "../constants";
-import logger from "../utils/logger"
+import logger from "../utils/logger";
 
 export const responseHandler = (err, req, res, next) => {
   let error = err;
@@ -35,11 +35,10 @@ export const responseHandler = (err, req, res, next) => {
   return res.status(status || httpStatus.OK).send(resp);
 };
 
-
 export const errorHandler = (err, req, res, next) => {
   const resp = {
     code: err.code,
-    message: `${err.name}: ${err.message}`,
+    message: err.message,
   };
   // TODO: Log error
   logger.error({

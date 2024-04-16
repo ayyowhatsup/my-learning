@@ -1,17 +1,17 @@
 import bcrypt from "bcryptjs";
-import moment from "moment";
 import jwt from "jsonwebtoken";
 import _ from "lodash";
 import { ERROR_CODES, TOKEN_TYPES } from "../../constants";
 import { RefreshToken, User } from "../../models";
 import ApiError from "../../utils/api-error";
 import db from "../../db";
+import { default as redisClient } from "../../db";
 
 const SALT_FACTOR = 10;
 
 export const authenticate = async (info) => {
   const { email, password } = info;
-  const user = db.get('users').find({email}).value()
+  const user = db.get("users").find({ email }).value();
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new ApiError({
       status: 400,
@@ -24,7 +24,7 @@ export const authenticate = async (info) => {
 
 export const createUser = async (info) => {
   const { name, email, password } = info;
-  const user = db.get('users').find({email}).value()
+  const user = db.get("users").find({ email }).value();
   if (user) {
     throw new ApiError({
       status: 400,
@@ -33,52 +33,73 @@ export const createUser = async (info) => {
     });
   }
   const salt = await bcrypt.genSalt(SALT_FACTOR);
-  const newUser = new User(name, email, await bcrypt.hash(password, salt))
-  await db.get('users').push(newUser).write()
+  const newUser = new User(name, email, await bcrypt.hash(password, salt));
+  await db.get("users").push(newUser).write();
   return newUser;
 };
 
-export const generateToken = (payload,secret = process.env.JWT_SECRET) => {
-  return jwt.sign(payload, secret, { algorithm: "HS256" });
+export const generateToken = (
+  payload,
+  expiresIn,
+  secret = process.env.JWT_SECRET
+) => {
+  return jwt.sign(payload, secret, { algorithm: "HS256", expiresIn });
 };
 
-export const generateAccessToken = async (user) => {
-  const expire = moment().add(process.env.ACCESS_TOKEN_TTL_SECONDS, "seconds");
+export const generateAccessToken = async (user, grantId = undefined) => {
   const payload = {
-    iat: moment().unix(),
-    exp: expire.unix(),
+    type: TOKEN_TYPES.ACCESS,
     sub: user.id,
-  }
-  return {accessToken: generateToken(payload), expire: payload.exp}
+    iss: grantId,
+  };
+  return generateToken(payload, process.env.ACCESS_TOKEN_TTL);
 };
 
-export const generateRefreshToken = async (user, grant_id = null) => {
-  const expire = moment().add(process.env.REFRESH_TOKEN_TTL_HOURS, "hours");
+export const generateRefreshToken = async (user, grantÍd = undefined) => {
   const payload = {
-    iat: moment().unix(),
-    exp: expire.unix(),
+    type: TOKEN_TYPES.REFRESH,
     sub: user.id,
-  }
-  const token = new RefreshToken(generateToken(payload), grant_id)
-  await db.get('refresh_tokens').push(token).write()
-  return {refreshToken : token.token, expire: payload.exp}
-}
+    iss: grantÍd,
+  };
+  const token = new RefreshToken(
+    generateToken(payload, process.env.REFRESH_TOKEN_TTL),
+    grantÍd
+  );
+  await db.get("refresh_tokens").push(token).write();
+  return token.token;
+};
 
 const revokeTokenFamily = (grantId) => {
-  db.get('refresh_tokens').remove(e => e.grant_id == grantId).write()
-}
+  db.get("refresh_tokens")
+    .remove((e) => e.grant_id == grantId)
+    .write();
+  // block grant_id until expiration
+  redisClient.set(`bl_${grantId}`, true).write();
+};
 
 export const rotateRefreshToken = async (user, refreshToken) => {
-  const token = db.get('refresh_tokens').find({token: refreshToken})
-  if(!token.value() || token.value().is_used){
-    if(token.value()) await revokeTokenFamily(token.value().id)
+  const token = db.get("refresh_tokens").find({ token: refreshToken });
+  const tokenValue = token.value();
+  const grantId = tokenValue.grant_id ?? tokenValue.id;
+  if (!tokenValue || tokenValue.is_used) {
+    if (tokenValue) {
+      revokeTokenFamily(grantId);
+    }
     throw new ApiError({
-      status: 400,
-      code: ERROR_CODES.BAD_REQUEST,
-      message: "Invalid token!",
+      status: 401,
+      code: ERROR_CODES.UNAUTHORIZED,
+      message: "Authentication required!",
     });
   }
-  await token.assign({is_used: true}).write()
-  return generateRefreshToken(user, token.value().grant_id ?? token.value().id)
-}
-export const getUserInfo = async(userId) => _.omit(await db.get('users').find({id: userId}).value(), 'password', 'created_at', 'id')
+  await token.assign({ is_used: true }).write();
+  const newToken = await generateRefreshToken(user, grantId);
+  return { token: newToken, grantId };
+};
+
+export const getUserInfo = async (userId) =>
+  _.omit(
+    await db.get("users").find({ id: userId }).value(),
+    "password",
+    "created_at",
+    "id"
+  );
