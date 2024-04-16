@@ -1,8 +1,20 @@
-import express from 'express'
-import authRoute from '../api/auth/auth.route'
+import express from "express";
+import authRoute from "../api/auth/auth.route";
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("../../swagger.json");
 
-const router = express.Router()
+const swaggerUiOptions = {
+  customCss:
+    '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"); *,html,body{font-family: "Inter", sans-serif !important;}',
+};
 
-router.use('/auth', authRoute)
+const router = express.Router();
 
-export default router
+router.use("/auth", authRoute);
+router.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, swaggerUiOptions)
+);
+
+export default router;
