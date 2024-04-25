@@ -26,10 +26,7 @@ export const userInfo = async (req, res, next) => {
 
 export const refresh = catchAsync(async (req, res, next) => {
   const refreshToken = req.user.token;
-  const { token, grantId } = await AuthService.rotateRefreshToken(
-    req.user,
-    refreshToken
-  );
-  const accessToken = await AuthService.generateAccessToken(req.user, grantId);
+  const token = await AuthService.rotateRefreshToken(req.user, refreshToken);
+  const accessToken = await AuthService.generateAccessToken(req.user);
   return next({ data: { accessToken, refreshToken: token } });
 });

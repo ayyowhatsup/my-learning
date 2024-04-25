@@ -1,9 +1,16 @@
-import crypto from 'crypto'
+import { DataTypes } from "sequelize";
+import sequelize from "../db";
 
-export default function User(name, email, password){
-    this.id = crypto.randomBytes(16).toString('hex')
-    this.name = name,
-    this.email = email,
-    this.password = password,
-    this.created_at = new Date().valueOf()
-}
+const User = sequelize.define("User", {
+  email: {
+    type: DataTypes.STRING(100),
+    validate: {
+      isEmail: true,
+    },
+  },
+  name: DataTypes.STRING(50),
+  password: DataTypes.STRING,
+  refreshToken: DataTypes.STRING(256),
+});
+
+export default User;

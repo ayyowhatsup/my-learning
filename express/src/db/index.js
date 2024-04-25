@@ -1,10 +1,13 @@
-import low from 'lowdb'
-import FileSync from 'lowdb/adapters/FileSync'
-import path from 'path'
+import { Sequelize } from "sequelize";
+import logger from "../utils/logger";
 
-const adapter = new FileSync(path.join(__dirname, "../../db.json"))
-const db = low(adapter)
+require("dotenv").config();
 
-db.defaults({ users: [], refresh_tokens: []}).write()
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  logging: logger.info.bind(logger),
+  define: {
+    underscored: true,
+  },
+});
 
-export default db
+export default sequelize;

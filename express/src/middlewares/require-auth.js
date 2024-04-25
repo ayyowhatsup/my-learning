@@ -2,7 +2,6 @@ import httpStatus from "http-status";
 import jwt from "jsonwebtoken";
 import ApiError from "../utils/api-error";
 import { ERROR_CODES } from "../constants";
-import { default as redisClient } from "../db";
 
 const decodeToken = (token) => {
   try {
@@ -22,8 +21,7 @@ const requireAuthToken = (tokenType) => (req, res, next) => {
     !(payload = decodeToken(
       (token = req.headers.authorization.split(" ")[1])
     )) ||
-    payload.type != tokenType ||
-    (payload.iss && redisClient.get(`bl_${payload.iss}`).value())
+    payload.type != tokenType
   ) {
     return next(
       new ApiError({

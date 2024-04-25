@@ -1,26 +1,30 @@
-import app from './app'
-import logger from './utils/logger';  
+import app from "./app";
+import sequelize from "./db";
+import logger from "./utils/logger";
 
-require('dotenv').config();
+require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
-const hostname = process.env.HOSTNAME || 'localhost'
+const hostname = process.env.HOSTNAME || "localhost";
 let server;
-const start = async() => {
+const start = async () => {
   try {
+    await sequelize.authenticate();
+    logger.info(`Connect to database successfully!`);
+    await sequelize.sync();
     server = app.listen(PORT, () => {
       // Log info server listen
-      logger.info(`Server is listening at ${hostname}:${PORT}`)
+      logger.info(`Server is listening at ${hostname}:${PORT}`);
     });
   } catch (error) {
-    logger.error(`${error.name}: ${error.message}`)
+    logger.error(`${error.name}: ${error.message}`);
   }
-}
+};
 const exitHandler = () => {
   if (server) {
     server.close(() => {
       // log server closed
-      logger.info("Server closed!")
+      logger.info("Server closed!");
       process.exit(1);
     });
   } else {
@@ -28,10 +32,11 @@ const exitHandler = () => {
   }
 };
 
-
 const unexpectedErrorHandler = (error) => {
   // log error
-  logger.error(`Unexpected error, server closed!: ${error.name}: ${error.message}`)
+  logger.error(
+    `Unexpected error, server closed!: ${error.name}: ${error.message}`
+  );
   exitHandler();
 };
 
@@ -40,9 +45,9 @@ process.on("unhandledRejection", unexpectedErrorHandler);
 
 process.on("SIGTERM", () => {
   // log system sigterm
-  logger.info('System sigterm, server closed!')
+  logger.info("System sigterm, server closed!");
   if (server) {
     server.close();
   }
 });
-start()
+start();
