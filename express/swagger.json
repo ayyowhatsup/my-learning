@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Express JWT Auth",
-    "description": "Simple JWT Authentication Services on Express",
+    "title": "Express Todo App",
+    "description": "Todo App",
     "version": "1.0.0"
   },
   "externalDocs": {
@@ -18,6 +18,14 @@
     {
       "name": "Authentication",
       "description": "Authentication",
+      "externalDocs": {
+        "description": "Find out more",
+        "url": "http://swagger.io"
+      }
+    },
+    {
+      "name": "Todo",
+      "description": "Todo",
       "externalDocs": {
         "description": "Find out more",
         "url": "http://swagger.io"
@@ -210,6 +218,299 @@
           }
         }
       }
+    },
+    "/todos": {
+      "get": {
+        "tags": ["Todo"],
+        "summary": "Get user todos",
+        "security": [
+          {
+            "bearerAccessToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BaseApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TodoDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Todo"],
+        "summary": "Create user todo",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTodoDto"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTodoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAccessToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BaseApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TodoDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/todos/{todoId}": {
+      "get": {
+        "security": [
+          {
+            "bearerAccessToken": []
+          }
+        ],
+        "summary": "Get user todo",
+        "tags": ["Todo"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "todoId",
+            "schema": {
+              "type": "integer",
+              "required": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BaseApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TodoDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid todo id, or not found todo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "security": [
+          {
+            "bearerAccessToken": []
+          }
+        ],
+        "summary": "Update user todo",
+        "tags": ["Todo"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "todoId",
+            "schema": {
+              "type": "integer",
+              "required": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTodoDto"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTodoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/BaseApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TodoDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid todo id, or not found todo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "bearerAccessToken": []
+          }
+        ],
+        "summary": "Delete user todo",
+        "tags": ["Todo"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "todoId",
+            "schema": {
+              "type": "integer",
+              "required": true
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid todo id, or not found todo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseApiResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -277,6 +578,47 @@
                 "type": "string"
               }
             }
+          }
+        }
+      },
+      "CreateTodoDto": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "example": "Go to work!"
+          }
+        }
+      },
+      "TodoDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UpdateTodoDto"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "createdAt": {
+                "type": "string"
+              },
+              "updatedAt": {
+                "type": "string"
+              },
+              "id": {
+                "type": "number"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateTodoDto": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "isCompleted": {
+            "type": "boolean"
           }
         }
       }
