@@ -1,5 +1,6 @@
 import express from "express";
 import authRoute from "../api/auth/auth.route";
+import todoRoute from "../api/todo/todo.route";
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("../../swagger.json");
 
@@ -11,6 +12,7 @@ const swaggerUiOptions = {
 const router = express.Router();
 
 router.use("/auth", authRoute);
+router.use("/todos", todoRoute);
 router.use(
   "/api-docs",
   swaggerUi.serve,
