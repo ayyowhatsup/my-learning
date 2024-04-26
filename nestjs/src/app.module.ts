@@ -31,6 +31,7 @@ import { redisStore } from 'cache-manager-redis-yet';
           store: await redisStore({
             ttl: 5000,
             url: config.get<string>('redis.url'),
+            pingInterval: 5000,
           }),
         };
       },
