@@ -6,6 +6,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
+import IResponse from './interfaces/response.interface';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
@@ -18,12 +19,17 @@ export class ResponseInterceptor implements NestInterceptor {
         const userAgent = req.get('user-agent') || '';
         const res = context.switchToHttp().getResponse();
         const statusCode = res.statusCode;
-        const { message, ...rest } = data ?? {};
-        const resp = {
+        const resp: IResponse = {
           statusCode,
-          message: message || 'The request was completed successfully!',
-          data: rest || null,
+          message: 'The request was completed successfully!',
         };
+        if (!!data && typeof data === 'object' && !Array.isArray(data)) {
+          const { message, ...rest } = data;
+          resp.message = message ?? resp.message;
+          if (rest) resp.data = rest;
+        } else if (!!data) {
+          resp.data = data;
+        }
         this.logger.log({
           ip,
           originalUrl,
