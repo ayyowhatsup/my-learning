@@ -19,6 +19,7 @@ import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiTags,
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
@@ -36,6 +37,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @ApiOperation({ summary: 'User login' })
   @ApiOkResponse()
   @ApiBadRequestResponse()
   async login(
@@ -49,6 +51,7 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(201)
+  @ApiOperation({ summary: 'User register' })
   @ApiBadRequestResponse()
   @ApiCreatedResponse()
   async register(
@@ -58,6 +61,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth('accessToken')
+  @ApiOperation({ summary: 'Get user info' })
   @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get('me')
@@ -67,6 +71,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth('accessToken')
+  @ApiOperation({ summary: 'Change user password' })
   @ApiOkResponse()
   @UseGuards(AuthGuard)
   @HttpCode(200)
@@ -82,6 +87,7 @@ export class AuthController {
   }
 
   @Post('confirm-registration')
+  @ApiOperation({ summary: 'User registration confirmation' })
   @ApiNoContentResponse()
   @HttpCode(204)
   confirmRegistration(@Query() authTokenDto: AuthTokenDto) {
@@ -89,6 +95,7 @@ export class AuthController {
   }
 
   @Post('password/reset')
+  @ApiOperation({ summary: 'User set a new password' })
   @ApiOkResponse()
   @HttpCode(200)
   resetPassword(
@@ -100,6 +107,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(200)
+  @ApiOperation({ summary: 'User forget password, request to reset' })
   @ApiTooManyRequestsResponse()
   @ApiOkResponse()
   async requestToResetPassword(
@@ -114,6 +122,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Refresh token' })
   @ApiBearerAuth('refreshToken')
   refreshToken(@Req() req: Request) {
     const refreshToken = extractTokenFromHeader(req);
