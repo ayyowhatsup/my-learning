@@ -111,7 +111,7 @@ export class AuthService {
     const tokenDoc = this.tokenRepository.create({
       token,
       user,
-      type: TOKEN_TYPE.REGISTRATION,
+      type: TOKEN_TYPE.RESET_PASSWORD,
       expire: new Date(
         new Date().valueOf() +
           ms(this.configService.get<string>('auth.reset_password_ttl')),
@@ -163,10 +163,13 @@ export class AuthService {
 
   async confirmRegistration(authTokenDto: AuthTokenDto) {
     const { token } = authTokenDto;
-    const tokenDoc = await this.tokenRepository.findOneBy({
-      token,
-      type: TOKEN_TYPE.REGISTRATION,
-      expire: MoreThan(new Date()),
+    const tokenDoc = await this.tokenRepository.findOne({
+      relations: ['user'],
+      where: {
+        token,
+        type: TOKEN_TYPE.REGISTRATION,
+        expire: MoreThan(new Date()),
+      },
     });
     if (!tokenDoc) throw new BadRequestException('Invalid Token!');
     await this.tokenRepository.delete({ token });
@@ -178,10 +181,13 @@ export class AuthService {
     resetPasswordDto: AuthResetPasswordDto,
   ) {
     const { token } = authTokenDto;
-    const tokenDoc = await this.tokenRepository.findOneBy({
-      token,
-      type: TOKEN_TYPE.RESET_PASSWORD,
-      expire: MoreThan(new Date()),
+    const tokenDoc: Token = await this.tokenRepository.findOne({
+      relations: ['user'],
+      where: {
+        token,
+        type: TOKEN_TYPE.RESET_PASSWORD,
+        expire: MoreThan(new Date()),
+      },
     });
     if (!tokenDoc) throw new BadRequestException('Invalid Token!');
     await this.tokenRepository.delete({ token });
