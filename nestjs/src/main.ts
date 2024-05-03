@@ -38,6 +38,7 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addTag('Authentication')
+    .addTag('Task')
     .build();
   const options = {
     customCss:

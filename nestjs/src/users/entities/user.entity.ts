@@ -1,6 +1,13 @@
 import { Exclude } from 'class-transformer';
 import { Token } from 'src/auth/entities/token.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Task } from 'src/task/entities/task.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToMany,
+} from 'typeorm';
 
 @Entity()
 export class User {
@@ -25,4 +32,10 @@ export class User {
 
   @OneToMany(() => Token, (token) => token.user)
   tokens: Token[];
+
+  @OneToMany(() => Task, (task) => task.assigner)
+  tasks: Task[];
+
+  @ManyToMany(() => Task, (task) => task.assignees)
+  assigned_tasks: Task[];
 }

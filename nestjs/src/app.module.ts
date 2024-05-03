@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { redisStore } from 'cache-manager-redis-yet';
     UsersModule,
     AuthModule,
     MailModule,
+    TaskModule,
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
