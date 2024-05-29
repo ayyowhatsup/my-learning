@@ -6,7 +6,7 @@ import { User } from 'src/users/entities/user.entity';
 import TOKEN_TYPE from './enums/token-type.enum';
 import ms from 'ms';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { DataSource, MoreThan, Repository } from 'typeorm';
 import { Token } from './entities/token.entity';
 
 @Injectable()
@@ -15,6 +15,7 @@ export class TokenService {
     private jwtService: JwtService,
     private configService: ConfigService,
     @InjectRepository(Token) private tokenRepository: Repository<Token>,
+    private dataSource: DataSource,
   ) {}
 
   private generateOpaqueToken(size = 64): string {
@@ -61,7 +62,11 @@ export class TokenService {
     return rfToken;
   }
 
-  async generateResetPasswordToken(user: User) {
+  // TODO: Refactor
+  async generateResetPasswordToken(
+    user: User,
+    repository = this.tokenRepository,
+  ) {
     const token = this.generateOpaqueToken(24);
     const tokenDoc = this.tokenRepository.create({
       token,
@@ -72,7 +77,7 @@ export class TokenService {
           ms(this.configService.get<string>('auth.reset_password_ttl')),
       ),
     });
-    await this.tokenRepository.save(tokenDoc);
+    await repository.save(tokenDoc);
     return token;
   }
 

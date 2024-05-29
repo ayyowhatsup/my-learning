@@ -8,16 +8,19 @@ import {
   Delete,
   UseGuards,
   SerializeOptions,
+  HttpCode,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiExtraModels,
   ApiForbiddenResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
   getSchemaPath,
@@ -26,7 +29,8 @@ import { AuthUser } from 'src/auth/decorators/auth-user.decorator';
 import { User } from './entities/user.entity';
 import { BaseResponseDto } from 'src/shared/dto/base-response.dto';
 import { AdminGuard } from 'src/auth/admin.guard';
-import { MailService } from 'src/mail/mail.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import _ from 'lodash';
 
 @ApiUnauthorizedResponse({
   description: 'Invalid token!',
@@ -38,11 +42,9 @@ import { MailService } from 'src/mail/mail.service';
 @ApiTags('User')
 @Controller('users')
 @ApiExtraModels(BaseResponseDto, User)
+@UseGuards(AuthGuard)
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly mailService: MailService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @ApiForbiddenResponse({
@@ -50,6 +52,9 @@ export class UsersController {
     schema: {
       $ref: getSchemaPath(BaseResponseDto),
     },
+  })
+  @ApiOperation({
+    summary: 'Create an user',
   })
   @SerializeOptions({ strategy: 'exposeAll' })
   @ApiCreatedResponse({
@@ -96,6 +101,9 @@ export class UsersController {
       ],
     },
   })
+  @ApiOperation({
+    summary: 'Get all users',
+  })
   findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
@@ -116,23 +124,35 @@ export class UsersController {
       ],
     },
   })
+  @ApiOperation({
+    summary: 'Get an user detail',
+  })
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findById(+id);
   }
 
+  @ApiOperation({
+    summary: 'Update user info',
+  })
   @ApiForbiddenResponse({
     description: 'Forbidden! Administration role required',
     schema: {
       $ref: getSchemaPath(BaseResponseDto),
     },
   })
+  @ApiBody({
+    type: CreateUserDto,
+  })
   @UseGuards(AdminGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+    return this.usersService.update(+id, _.omit(updateUserDto, ['email']));
   }
 
+  @ApiOperation({
+    summary: 'Delete an user',
+  })
   @ApiForbiddenResponse({
     description: 'Forbidden! Administration role required',
     schema: {
@@ -141,7 +161,8 @@ export class UsersController {
   })
   @UseGuards(AdminGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @HttpCode(200)
+  async remove(@Param('id') id: string) {
+    await this.usersService.remove(+id);
   }
 }

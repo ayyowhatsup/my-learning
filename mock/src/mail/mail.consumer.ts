@@ -40,5 +40,6 @@ export class MailConsumer {
       subject: subject,
       text: content,
     });
+    this.logger.log(`Email subject [${subject}] is sent to [${to}]`);
   }
 }

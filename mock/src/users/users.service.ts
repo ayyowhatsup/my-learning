@@ -7,32 +7,56 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import {
   generateRandomPassword,
   hashPassword,
   verifyPassword,
 } from 'src/utils/password';
+import { MailService } from 'src/mail/mail.service';
+import { TokenService } from 'src/token/token.service';
+import { ConfigService } from '@nestjs/config';
+import { Token } from 'src/token/entities/token.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private mailService: MailService,
+    private tokenService: TokenService,
+    private configService: ConfigService,
+    private dataSource: DataSource,
   ) {}
 
   async create(createdBy: number, createUserDto: CreateUserDto): Promise<User> {
-    const { email } = createUserDto;
-    if (await this.isEmailUsed(email)) {
-      throw new BadRequestException('Invalid email', 'Email is already used!');
-    }
-    const password = generateRandomPassword();
-    const hashedPassword: string = await hashPassword(password);
-    const newUser = this.userRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-      createdBy: { id: createdBy },
+    return this.dataSource.manager.transaction(async (manager) => {
+      const { email } = createUserDto;
+      if (await this.isEmailUsed(email)) {
+        throw new BadRequestException(
+          'Invalid email',
+          'Email is already used!',
+        );
+      }
+      const password = generateRandomPassword();
+      const hashedPassword: string = await hashPassword(password);
+      const newUser = manager.getRepository(User).create({
+        ...createUserDto,
+        password: hashedPassword,
+        createdBy: { id: createdBy },
+      });
+      await manager.getRepository(User).save(newUser);
+      const token: string = await this.tokenService.generateResetPasswordToken(
+        newUser,
+        manager.getRepository(Token),
+      );
+      const resetPasswordLink = `${this.configService.get<string>(
+        'storefront_reset_password_url',
+      )}?token=${token}`;
+
+      this.mailService.sendEmailRegisterConfirmation(email, resetPasswordLink);
+
+      return newUser;
     });
-    return this.userRepository.save(newUser);
   }
 
   findAll(): Promise<User[]> {
@@ -43,12 +67,18 @@ export class UsersService {
     return this.userRepository.findOneBy({ id });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    return this.userRepository.save({
+      ...updateUserDto,
+      id: id,
+      ...(updateUserDto.password
+        ? { password: await hashPassword(updateUserDto.password) }
+        : {}),
+    });
   }
 
   remove(id: number) {
-    return `This action removes a #${id} user`;
+    return this.userRepository.delete({ id });
   }
 
   async findByEmailAndPassword(email, password): Promise<User | null> {

@@ -51,6 +51,9 @@ export class TimeLogController {
   @Get('me')
   @HttpCode(200)
   @ApiExtraModels(TimeLogDto)
+  @ApiOperation({
+    summary: 'Get user timelog in a specific month',
+  })
   @ApiOkResponse({
     description: 'Get user time log successfully',
     schema: {

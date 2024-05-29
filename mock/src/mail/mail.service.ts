@@ -1,16 +1,18 @@
 import { InjectQueue } from '@nestjs/bull';
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { Queue } from 'bull';
 
 @Injectable()
 export class MailService {
-  private readonly logger = new Logger(MailService.name);
+  constructor(@InjectQueue('mail') private readonly mailQueue: Queue) {}
 
-  constructor(
-    private configService: ConfigService,
-    @InjectQueue('mail') private readonly mailQueue: Queue,
-  ) {}
+  sendEmailRegisterConfirmation(email: string, updatePasswordLink: string) {
+    this.addMailJob(
+      email,
+      'Account was created for you',
+      `Hello ${email},\n\nThe Administrator created an account for you. Now you are a member our application. Click this link to set an password\n${updatePasswordLink}\n\nThanks,\nNeko Chan.`,
+    );
+  }
 
   sendEmailResetPasswordLink(email: string, resetPasswordLink: string) {
     this.addMailJob(
@@ -30,5 +32,13 @@ export class MailService {
 
   addMailJob(to: string, subject: string, content: string) {
     this.mailQueue.add('sendMail', { to, subject, content });
+  }
+
+  sendMailNotification(to: string, subject: string, content: string) {
+    this.addMailJob(
+      to,
+      `[Neko Chan Notification]: ${subject}`,
+      `You have a new notification\n\n--------------------\n${content}\n--------------------\n\nSend with love,\nNeko Chan`,
+    );
   }
 }

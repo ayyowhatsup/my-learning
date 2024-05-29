@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class MonthYearDto {
   @Min(1)
@@ -8,11 +8,13 @@ export class MonthYearDto {
   @Type(() => Number)
   @IsInt()
   @ApiProperty()
+  @IsOptional()
   month: number;
 
   @Type(() => Number)
   @IsInt()
   @Max(new Date().getFullYear())
   @ApiProperty()
+  @IsOptional()
   year: number;
 }

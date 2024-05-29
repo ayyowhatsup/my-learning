@@ -42,7 +42,7 @@ export class AuthService {
     let tokenDoc: Token;
     if (
       !token ||
-      (tokenDoc =
+      !(tokenDoc =
         await this.tokenService.findValidRefreshTokenByTokenWithRelation(token))
     ) {
       throw new UnauthorizedException('Invalid token!');

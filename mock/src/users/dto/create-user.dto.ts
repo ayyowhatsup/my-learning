@@ -36,4 +36,8 @@ export class CreateUserDto {
   @ApiProperty()
   @IsOptional()
   isAdmin: boolean = false;
+
+  @IsOptional()
+  @ApiProperty()
+  password: string;
 }

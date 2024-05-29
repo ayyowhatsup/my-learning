@@ -10,6 +10,7 @@ import {
   SerializeOptions,
   UseGuards,
 } from '@nestjs/common';
+import _ from 'lodash';
 import { AuthService } from './auth.service';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthPairTokenResponse } from './dto/auth-pair-token-response.dto';
@@ -35,6 +36,8 @@ import { AuthTokenDto } from './dto/auth-token-dto';
 import { TokenService } from 'src/token/token.service';
 import { Token } from 'src/token/entities/token.entity';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
+import { UsersService } from 'src/users/users.service';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -43,6 +46,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly tokenService: TokenService,
+    private readonly usersService: UsersService,
   ) {}
 
   @ApiOperation({ summary: 'Log user into system' })
@@ -68,6 +72,7 @@ export class AuthController {
     },
   })
   @Post('login')
+  @HttpCode(200)
   login(
     @Body() authEmailLoginDto: AuthEmailLoginDto,
   ): Promise<AuthPairTokenResponse> {
@@ -108,11 +113,16 @@ export class AuthController {
     summary: 'User change info',
   })
   @ApiBody({
-    type: UpdateUserDto,
+    type: CreateUserDto,
   })
   @Post('me')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('accessToken')
   updateUserInfo(@AuthUser() user, @Body() updateUserDto: UpdateUserDto) {
-    return updateUserDto;
+    return this.usersService.update(
+      user.id,
+      _.omit(updateUserDto, ['isAdmin', 'password', 'email']),
+    );
   }
 
   @ApiUnauthorizedResponse({
